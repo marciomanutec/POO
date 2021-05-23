@@ -1,0 +1,9 @@
+{
+	"name": "Interfaces",
+	"description": "MyPoo",
+	"version": "1.0.0",
+	"homepage": "",
+	"mainsrc": "Poo",
+	"projects": [],
+	"dependencies": {}
+}

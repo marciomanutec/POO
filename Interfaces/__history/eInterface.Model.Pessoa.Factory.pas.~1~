@@ -1,0 +1,8 @@
+unit eInterface.Model.Pessoa.Factory;
+// Responsavel em criar tanto uma pessoa fisica como juridica
+
+interface
+
+implementation
+
+end.

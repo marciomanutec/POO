@@ -1,0 +1,64 @@
+unit U_Interfaces.View;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls,
+  eInterface.Model.interfaces, Vcl.ExtCtrls;
+
+type
+  TForm1 = class(TForm)
+    M_Pessoa: TMemo;
+    btn_pessoa: TButton;
+    edt_nome: TEdit;
+    edt_sobre: TEdit;
+    rg_pessoa: TRadioGroup;
+    procedure btn_pessoaClick(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+  private
+  FPessoa : iPessoa;
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  Form1: TForm1;
+
+implementation
+
+uses
+  eInterface.Model.Pessoa.Factory;
+
+
+
+{$R *.dfm}
+
+procedure TForm1.btn_pessoaClick(Sender: TObject);
+begin
+    if rg_pessoa.ItemIndex = 0 then
+     FPessoa :=TModelPessoaFactory.New.PessoaFisica
+    else
+    if rg_pessoa.ItemIndex = 1 then
+    FPessoa :=TModelPessoaFactory.New.PessoaJuridica
+    else
+    begin
+      ShowMessage('Informe o Tipo de Pessoa !');
+      exit
+    end;
+
+    M_Pessoa.Lines.Add(
+     FPessoa
+    .Nome(edt_nome.Text)
+    .SobreNome(edt_sobre.Text)
+    .NomeCompleto
+    );
+end;
+
+procedure TForm1.FormCreate(Sender: TObject);
+begin
+//   FPessoa :=TModelPessoaFactory.New.PessoaJuridica;
+end;
+
+end.

@@ -1,0 +1,14 @@
+unit Unit1;
+
+interface
+
+type
+
+  iPessoa = Interface    // Funcionalidas que uma pessoa tem
+  ['{EF4F25F3-BB1C-45E7-9D27-D07FA6D6BB3D}']
+
+end;
+
+implementation
+
+end.

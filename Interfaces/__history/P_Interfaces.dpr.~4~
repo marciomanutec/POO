@@ -1,0 +1,17 @@
+program P_Interfaces;
+
+uses
+  Vcl.Forms,
+  U_Interfaces.View in 'U_Interfaces.View.pas' {Form1},
+  eInterface.Model.interfaces in 'eInterface.Model.interfaces.pas',
+  eInterface.Model.PessoaFisica in 'eInterface.Model.PessoaFisica.pas',
+  eInterface.Model.PessoaJuridica in 'eInterface.Model.PessoaJuridica.pas';
+
+{$R *.res}
+
+begin
+  Application.Initialize;
+  Application.MainFormOnTaskbar := True;
+  Application.CreateForm(TForm1, Form1);
+  Application.Run;
+end.
