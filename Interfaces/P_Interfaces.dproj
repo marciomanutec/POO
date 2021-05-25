@@ -106,6 +106,8 @@
         <DCCReference Include="eInterface.Model.PessoaFisica.pas"/>
         <DCCReference Include="eInterface.Model.PessoaJuridica.pas"/>
         <DCCReference Include="eInterface.Model.Pessoa.Factory.pas"/>
+        <DCCReference Include="eInterface.Controller.Pessoa.pas"/>
+        <DCCReference Include="eInterface.Controller.Interfaces.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>

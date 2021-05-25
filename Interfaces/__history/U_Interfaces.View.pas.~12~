@@ -15,6 +15,7 @@ type
     edt_sobre: TEdit;
     rg_pessoa: TRadioGroup;
     procedure btn_pessoaClick(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
   private
   FPessoa : iPessoa;
     { Private declarations }
@@ -47,6 +48,11 @@ begin
     .SobreNome(edt_sobre.Text)
     .NomeCompleto
     );
+end;
+
+procedure TForm1.FormCreate(Sender: TObject);
+begin
+ // FPessoa :=TModelPessoaFactory.New.PessoaFisica;
 end;
 
 end.
