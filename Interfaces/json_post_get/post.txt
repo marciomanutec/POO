@@ -1,0 +1,219 @@
+POST.......
+__No Dm___
+    if RequestType = TRequestType.rtPost then
+    begin
+     if (Assigned (Params.ItemsString['undefined']))  and
+        (Trim(Params.ItemsString['undefined'].AsString) <> EmptyStr) then
+    
+     Result  :=InserirOrcamentoItens(Params.ItemsString['undefined'].AsString,
+                                                                      StatusCode)
+
+function TDm.InserirOrcamentoItens(JsonOrcaItens : String;
+                            out status: integer): string;
+var
+    ArrayOrc, ArrayItem: TJSONArray;
+    json  :  TJSONObject;
+    x, j  :  integer;
+    orca  :  TPedidoOrcamento;
+    itens :  TItensOrcamento;
+    erro  :  string;
+begin
+
+    try
+      json := TJSONObject.Create;
+      orca  := TPedidoOrcamento.Create(dm.conn);
+      itens := TItensOrcamento.Create(dm.conn);
+      ArrayOrc := TJSONObject.ParseJSONValue(TEncoding.UTF8.GetBytes(JsonOrcaItens), 0) as TJSONArray;
+
+       for x := 0 to ArrayOrc.Size - 1 do
+        begin
+        orca.ID_PEDIDO  := ArrayOrc.Get(x).GetValue<integer>('ID_PEDIDO', 0);
+        orca.ID_USUARIO := ArrayOrc.Get(x).GetValue<integer>('ID_USUARIO', 0);
+        orca.STATUS     := ArrayOrc.Get(x).GetValue<string>('STATUS','');
+        orca.VALOR_TOTAL:= ArrayOrc.Get(x).GetValue<double>('VALOR_TOTAL', 0);
+        orca.OBS        := ArrayOrc.Get(x).GetValue<string>('OBS','');
+
+
+        // Validações dos parametros...
+        if (orca.ID_PEDIDO <=0 ) or (orca.ID_USUARIO <=0) or (orca.OBS = EmptyStr) then
+        begin
+            json.AddPair('retorno', 'Informe todos os parâmetros');
+            json.AddPair('id_orcamento', '0');
+            Status := 400;
+            Result := json.ToString;
+            exit;
+        end;
+
+        if NOT orca.Inserir(erro) then
+        begin
+            json.AddPair('retorno', erro);
+            json.AddPair('id_orcamento', '0');
+            Status := 400;
+        end
+        else
+        begin
+
+          ArrayItem := ArrayOrc.Get(x).GetValue<TJsonArray>('itens');
+
+          for j := 0 to ArrayItem.Size - 1 do
+           begin
+            itens.ID_ORCAMENTO := orca.ID_ORCAMENTO;
+            itens.DESCRICAO    := ArrayItem.Get(j).GetValue<string>('DESCRICAO', '');
+            itens.PRECO        := ArrayItem.Get(j).GetValue<double>('PRECO', 0);
+
+            if NOT ITENS.InserirItens(erro) then
+            begin
+               json.AddPair('retorno', erro);
+               json.AddPair('id_orcamento', '0');
+               Status := 400;
+               exit;
+            end;
+          end;
+
+
+
+        end;
+
+       end;
+
+       json.AddPair('retorno', 'OK');
+       json.AddPair('Total de Orçamentos Salvo com sucesso:', ArrayOrc.Size.ToString);
+       Status := 201;
+
+       Result := json.ToString;
+
+    finally
+        ArrayOrc.DisposeOf;
+        json.DisposeOf;
+        orca.DisposeOf;
+        itens.DisposeOf;
+    end;
+end;
+
+__Cab__
+function TPedidoOrcamento.Inserir(out erro: string): Boolean;
+var
+    qry : TFDQuery;
+begin
+    if (ID_PEDIDO <= 0)  then
+    begin
+        Result := false;
+        erro := 'Pedido não informado';
+        exit;
+    end;
+
+    if (ID_USUARIO <= 0)  then
+    begin
+        Result := false;
+        erro := 'Usuário do orçamento não informado';
+        exit;
+    end;
+
+    if (STATUS = '')  then
+    begin
+        Result := false;
+        erro := 'Status do orçamento não informado';
+        exit;
+    end;
+
+    try
+        qry := TFDQuery.Create(nil);
+        qry.Connection := FConn;
+
+        with qry do
+        begin
+            FConn.StartTransaction;
+
+            Active := false;
+            sql.Clear;
+            SQL.Add('INSERT INTO TAB_PEDIDO_ORCAMENTO(ID_PEDIDO, ID_USUARIO, STATUS, DT_GERACAO, VALOR_TOTAL, OBS)');
+            SQL.Add('VALUES(:ID_PEDIDO, :ID_USUARIO, :STATUS, current_timestamp, :VALOR_TOTAL, :OBS)');
+
+            ParamByName('ID_PEDIDO').Value := ID_PEDIDO;
+            ParamByName('ID_USUARIO').Value := ID_USUARIO;
+            ParamByName('STATUS').Value := 'P';
+            ParamByName('VALOR_TOTAL').Value := VALOR_TOTAL;
+            ParamByName('OBS').Value := OBS;
+            ExecSQL;
+
+
+            Active := false;
+            SQL.Clear;
+            SQL.Add('UPDATE TAB_PEDIDO ');
+            SQL.Add('SET QTD_ORCAMENTO = QTD_ORCAMENTO(ID_PEDIDO)');
+            SQL.Add('WHERE ID_PEDIDO = :ID_PEDIDO');
+            ParamByName('ID_PEDIDO').Value := ID_PEDIDO;
+            ExecSQL;
+
+            FConn.Commit;
+
+
+            // Busca o ID gerado...
+            Active := false;
+            sql.Clear;
+            SQL.Add('SELECT MAX(ID_ORCAMENTO) AS ID_ORCAMENTO FROM TAB_PEDIDO_ORCAMENTO');
+            SQL.Add('WHERE ID_USUARIO=:ID_USUARIO');
+            ParamByName('ID_USUARIO').Value := ID_USUARIO;
+            Active := true;
+
+            ID_ORCAMENTO := FieldByName('ID_ORCAMENTO').AsInteger;
+
+            DisposeOf;
+        end;
+
+        Result := true;
+        erro := '';
+
+    except on ex:exception do
+        begin
+            FConn.Rollback;
+            Result := false;
+            erro := 'Erro ao inserir orçamento: ' + ex.Message;
+        end;
+    end;
+
+end;
+
+__Itens__
+function TItensOrcamento.InserirItens(out erro: string): Boolean;
+var
+    Itens : TFDQuery;
+begin
+   try
+        Itens := TFDQuery.Create(nil);
+        Itens.Connection := FConn;
+
+        with Itens do
+        begin
+            FConn.StartTransaction;
+
+            Active := false;
+            sql.Clear;
+            SQL.Add('INSERT INTO TAB_ITENS_ORCAMENTO(ID_ORCAMENTO, DESCRICAO, PRECO)');
+            SQL.Add('VALUES(:ID_ORCAMENTO, :DESCRICAO, :PRECO)');
+
+            ParamByName('ID_ORCAMENTO').Value := ID_ORCAMENTO;
+            ParamByName('DESCRICAO').Value := DESCRICAO;
+            ParamByName('PRECO').Value := PRECO;
+            ExecSQL;
+
+
+            FConn.Commit;
+
+
+
+            DisposeOf;
+        end;
+
+        Result := true;
+        erro := '';
+
+    except on ex:exception do
+        begin
+            FConn.Rollback;
+            Result := false;
+            erro := 'Erro ao inserir itens do orçamento: ' + ex.Message;
+        end;
+    end;
+
+end;

@@ -1,0 +1,203 @@
+// No DM
+function TDm.OrcamentosItens(id_orcamento: string;
+                             out status_code: integer): string;
+var
+    orca  : TPedidoOrcamento;
+    itens : TItensOrcamento;
+    jsonerro : TJSONObject;
+    jsonObjorc, jsonObjItem: TJSONObject;
+    jsonArrayOrc, jsonArrayItem : TJSONArray;
+    QrOrca, QRItens : TFDQuery;
+    erro: string;
+    LOG : TStringList;
+begin
+
+    if id_orcamento = EmptyStr then
+    begin
+      jsonerro := TJSONObject.Create;
+      jsonerro.AddPair('retorno', 'nenhum orçamento informado');
+      status_code := 400;
+      Result := jsonerro.ToJSON;
+      jsonerro.DisposeOf;
+      exit
+    end;
+
+    try
+        orca := TPedidoOrcamento.Create(dm.conn);
+        orca.ID_ORCAMENTO := id_orcamento.ToInteger;
+
+        QrOrca:= orca.ListarOrcamento('', erro);
+
+        if QrOrca.IsEmpty then
+        begin
+          jsonerro := TJSONObject.Create;
+          jsonerro.AddPair('retorno', 'nenhum orçamento encontrado');
+          status_code := 200;
+          Result := jsonerro.ToJSON;
+          jsonerro.DisposeOf;
+
+
+        end
+        else
+        begin
+           itens := TItensOrcamento.Create(dm.conn);
+           itens.ID_ORCAMENTO :=QrOrca.FieldByName('ID_ORCAMENTO').Value;
+           QRItens :=itens.ListarItens(erro);
+
+           // CRIA O JSON ARRAY DE ORCAMENTOS
+           jsonArrayOrc := TJSONArray.Create;
+
+           //ORÇAMENTOS
+           QrOrca.First;
+
+
+           while not QrOrca.Eof do
+           begin
+            // CRIA O JSON OBJ ORCAMENTO
+            jsonObjorc   :=TJSONObject.Create;
+            jsonObjorc.AddPair('ID_PEDIDO', QrOrca.FieldByName('ID_PEDIDO').Value);
+            jsonObjorc.AddPair('ID_ORCAMENTO', QrOrca.FieldByName('ID_ORCAMENTO').Value);
+            jsonObjorc.AddPair('ID_USUARIO', QrOrca.FieldByName('ID_USUARIO').Value);
+            jsonObjorc.AddPair('STATUS', QrOrca.FieldByName('STATUS').Value);
+            jsonObjorc.AddPair('VALOR_TOTAL', TJSONNumber.Create(QrOrca.FieldByName('VALOR_TOTAL').Value));
+            jsonObjorc.AddPair('OBS', QrOrca.FieldByName('OBS').Value);
+
+            // CRIA O JSON ARRAY DE ITENS
+            jsonArrayItem := TJSONArray.Create;
+            // Itens...
+            QRItens.First;
+
+            while not QRItens.Eof do
+            begin
+                //CRIA O JSON OBJ DE ITENS
+                jsonObjItem :=TJSONObject.Create;
+            // if QRItens.FieldByName('ID_ORCAMENTO').Value = QrOrca.FieldByName('ID_ORCAMENTO').Value then
+            // begin
+                jsonObjItem.AddPair('ID_ORCAMENTO', QRItens.FieldByName('ID_ORCAMENTO').Value);
+                jsonObjItem.AddPair('DESCRICAO', QRItens.FieldByName('DESCRICAO').Value);
+                jsonObjItem.AddPair('PRECO', TJSONNumber.Create(QRItens.FieldByName('PRECO').Value));
+
+            // end;
+
+              // ADD O OBJ ITEM AO ARRAY ITEM
+             jsonArrayItem.AddElement(jsonObjItem);
+
+             QRItens.Next;
+            end;
+
+
+
+
+            // ADD O ARRAY DE ITEM NO OBJ ORCAMENTO
+            jsonObjorc.AddPair('itens', jsonArrayItem);
+
+            // montar jsonarray de orçamento
+            jsonArrayOrc.AddElement(jsonObjorc);
+
+            QrOrca.Next;
+           end;
+
+
+          Result := jsonArrayOrc.ToJSON;
+          LOG := TStringList.Create;
+          LOG.Text :=Result;
+          LOG.SaveToFile('LOG.txt');
+
+          status_code := 200;
+        end;
+
+    finally
+
+        if Assigned( LOG) then
+           LOG.DisposeOf;
+
+      if Assigned(jsonArrayOrc) then
+          jsonArrayOrc.DisposeOf;
+
+       if Assigned(QRItens) then
+          QRItens.DisposeOf;
+
+       if Assigned(itens) then
+          itens.DisposeOf;
+
+       if Assigned(QrOrca) then
+           QrOrca.DisposeOf;
+
+       if Assigned(orca) then
+          orca.DisposeOf;
+
+    end;
+end;
+
+__Cab__
+function TPedidoOrcamento.ListarOrcamento(order_by: string; out erro: string): TFDQuery;
+var
+    qry : TFDQuery;
+begin
+    try
+        qry := TFDQuery.Create(nil);
+        qry.Connection := FConn;
+
+        with qry do
+        begin
+            Active := false;
+            sql.Clear;
+            SQL.Add('SELECT O.*, U.NOME');
+            SQL.Add('FROM TAB_PEDIDO_ORCAMENTO O');
+            SQL.Add('JOIN TAB_USUARIO U ON (U.ID_USUARIO = O.ID_USUARIO)');
+            SQL.Add('WHERE O.ID_ORCAMENTO = :ID_ORCAMENTO');
+
+            ParamByName('ID_ORCAMENTO').Value := ID_ORCAMENTO;
+
+            if order_by = '' then
+                SQL.Add('ORDER BY O.ID_ORCAMENTO DESC')
+            else
+                SQL.Add('ORDER BY ' + order_by);
+
+            Active := true;
+        end;
+
+        erro := '';
+        result := qry;
+
+    except on ex:exception do
+        begin
+            erro := 'Erro ao listar orçamentos: ' + ex.Message;
+            Result := nil;
+        end;
+    end;
+end;
+
+__Itens__
+function TItensOrcamento.ListarItens(out erro: string): TFDQuery;
+var
+    Itens : TFDQuery;
+begin
+      try
+        Itens := TFDQuery.Create(nil);
+        Itens.Connection := FConn;
+
+        with Itens do
+        begin
+            Active := false;
+            sql.Clear;
+            SQL.Add('SELECT * FROM TAB_ITENS_ORCAMENTO');
+            SQL.Add('WHERE ID_ORCAMENTO = :ID_ORCAMENTO');
+
+            ParamByName('ID_ORCAMENTO').Value := ID_ORCAMENTO;
+
+            Active := true;
+        end;
+
+        erro := '';
+        result := Itens;
+
+    except on ex:exception do
+        begin
+            erro := 'Erro ao consultar itens: ' + ex.Message;
+            Result := nil;
+        end;
+    end;
+
+
+end;
