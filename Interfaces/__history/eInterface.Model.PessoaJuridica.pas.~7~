@@ -26,9 +26,6 @@ end;
 
 implementation
 
-uses
-  System.SysUtils;
-
 { TModelPessoa }
 
 constructor TModelPessoaJuridica.Create;
@@ -66,7 +63,7 @@ end;
 
 function TModelPessoaJuridica.NomeCompleto: String;
 begin
-  Result := FNome + ' ' + FSobreNome + ' LTDA ME' + ' Faturamento: ' +  FloatToStr(FFaturamento);
+   Result := FNome + ' ' + FSobreNome+ ' LTDA ME' ;
 end;
 
 function TModelPessoaJuridica.SobreNome(Value: String): iPessoa;

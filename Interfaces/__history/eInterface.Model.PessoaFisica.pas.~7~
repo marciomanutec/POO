@@ -28,7 +28,7 @@ end;
 implementation
 
 uses
-  System.Classes, System.SysUtils;
+  System.Classes;
 
 { TModelPessoa }
 
@@ -67,7 +67,7 @@ end;
 
 function TModelPessoaFisica.NomeCompleto: String;
 begin
-   Result := FNome + ' ' + FSobreNome + ' Faturamento: ' +  FloatToStr(FFaturamento);
+   Result := FNome + ' ' + FSobreNome + 'Faturamento: ';
 end;
 
 function TModelPessoaFisica.SobreNome(Value: String): iPessoa;

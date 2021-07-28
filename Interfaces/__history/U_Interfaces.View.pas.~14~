@@ -15,7 +15,6 @@ type
     edt_sobre: TEdit;
     rg_pessoa: TRadioGroup;
     procedure btn_pessoaClick(Sender: TObject);
-    procedure FormCreate(Sender: TObject);
   private
   FPessoa : iPessoa;
     { Private declarations }
@@ -29,18 +28,18 @@ var
 implementation
 
 uses
-  eInterface.Model.Pessoa.Factory;
-
+  eInterface.Controller.Pessoa, eInterface.Controller.Interfaces;
 
 
 {$R *.dfm}
 
 procedure TForm1.btn_pessoaClick(Sender: TObject);
 begin
-    if rg_pessoa.ItemIndex = 0 then
-     FPessoa :=TModelPessoaFactory.New.PessoaFisica
-    else
-    FPessoa :=TModelPessoaFactory.New.PessoaJuridica;
+    case rg_pessoa.ItemIndex of
+     -1  :  exit;
+     0   :  FPessoa :=TControllerPessoa.New.Pessoa(tpFisica);
+     1   :  FPessoa :=TControllerPessoa.New.Pessoa(tpJuridica);
+    end;
 
     M_Pessoa.Lines.Add(
      FPessoa
@@ -48,11 +47,6 @@ begin
     .SobreNome(edt_sobre.Text)
     .NomeCompleto
     );
-end;
-
-procedure TForm1.FormCreate(Sender: TObject);
-begin
-//   FPessoa :=TModelPessoaFactory.New.PessoaJuridica;
 end;
 
 end.

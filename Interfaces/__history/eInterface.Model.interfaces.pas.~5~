@@ -10,8 +10,6 @@ type
   function SobreNome (Value : String) : iPessoa;
   function NomeCompleto : String;
   function Faturamento(Value  : Double) : iPessoa;
-  function Fatura : String;
-
 end;
 
   iPessoaFactory = interface

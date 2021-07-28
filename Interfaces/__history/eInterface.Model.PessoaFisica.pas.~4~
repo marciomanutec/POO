@@ -16,8 +16,6 @@ type
     function SobreNome (Value : String) : iPessoa;
     function NomeCompleto : String;
     function Faturamento(Value  : Double) : iPessoa;
-    function Fatura : String;
-
 
    public
    constructor Create;
@@ -26,9 +24,6 @@ type
 end;
 
 implementation
-
-uses
-  System.Classes, System.SysUtils;
 
 { TModelPessoa }
 
@@ -43,15 +38,10 @@ begin
   inherited;
 end;
 
-function TModelPessoaFisica.Fatura: String;
+function TModelPessoaFisica.Faturamento(Value: Double): iPessoa;
 begin
-  Result := 'Faturamento:  R$12.000';
-end;
-
-function TModelPessoaFisica.Faturamento(Value  : Double) : iPessoa;
-begin
-     Result := Self;
-     FFaturamento := Value;
+    Result :=Self;
+    FFaturamento := Value;
 end;
 
 class function TModelPessoaFisica.New: iPessoa;
@@ -67,7 +57,7 @@ end;
 
 function TModelPessoaFisica.NomeCompleto: String;
 begin
-   Result := FNome + ' ' + FSobreNome + ' Faturamento: ' +  FloatToStr(FFaturamento);
+   Result := FNome + ' ' + FSobreNome;
 end;
 
 function TModelPessoaFisica.SobreNome(Value: String): iPessoa;

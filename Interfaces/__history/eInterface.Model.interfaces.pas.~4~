@@ -9,9 +9,7 @@ type
   function Nome(Value : String) : iPessoa;
   function SobreNome (Value : String) : iPessoa;
   function NomeCompleto : String;
-  function Faturamento(Value  : Double) : iPessoa;
-  function Fatura : String;
-
+  function Faturamento(Value  : Double); iPessoa;
 end;
 
   iPessoaFactory = interface

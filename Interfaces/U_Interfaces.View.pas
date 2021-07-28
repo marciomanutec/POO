@@ -45,8 +45,11 @@ begin
      FPessoa
     .Nome(edt_nome.Text)
     .SobreNome(edt_sobre.Text)
+    .Faturamento(1200)
     .NomeCompleto
     );
+
+    ShowMessage(FPessoa.Fatura);
 end;
 
 end.
